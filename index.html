@@ -6,7 +6,8 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="http://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="http://cdn.jsdelivr.net/npm/gun/sea.js"></script>
   <style>
     *,
     *::before,
@@ -61,43 +62,30 @@
   <script>
     const peers = [
       'https://gun-us.herokuapp.com/gun',
-      'https://gun-eu.herokuapp.com/gun', 
+      'https://gun-eu.herokuapp.com/gun',
       'https://gun-asia.herokuapp.com/gun'
     ];
+    let keys = {};
 
     const gun = Gun({
       peers,
     });
-    // intitialize a new gundb user namespace called user and allow them to authenticated with a password
-    const todoListGraph = gun.get('todos');
-    console.log(
-      '%c-----------\n\n%ctodos:%c %o: \n\n-----------',
-      'font-size:normal;color:hotpink;',
-      'font-size:16px;color:#08c;',
-      'font-size:normal;color:hotpink;',
-      todoListGraph
-    );
+    
+    /// wrong way to do it - you fucked it up
+    const user = gun.user();
 
-    function addTodo() {
-      todoListGraph.set({
-        text: todo_input.value,
-        done: false,
-      });
-      todo_input.value = '';
-    }
-
-    // create a gun db for todos
-    document.addEventListener('DOMContentLoaded', (e) => {
-      const todo_list = document.getElementById('todo_list');
-      const todo_input = document.getElementById('todo_input');
-      const add_todo = document.getElementById('add_todo');
-
-      add_todo.addEventListener('click', addTodo);
-      todo_input.addEventListener('keyup', (e) => {
-        if (e.keyCode === 13) {
-          addTodo();
-        }
-      });
+    function start(user) {
+      if (!user.is) return;
+      
+      const todoListGraph = user.get('todos');
+      
+      console.log(
+        '%c-----------\n\n%ctodos:%c %o: \n\n-----------',
+        'font-size:normal;color:hotpink;',
+        'font-size:16px;color:#08c;',
+        'font-size:normal;color:hotpink;',
+        todoListGraph
+      );
 
       todoListGraph.map().on((todo, id) => {
         let maybeLi = document.getElementById(id);
@@ -128,6 +116,41 @@
           'font-size:normal;color:hotpink;'
         );
       });
+    }
+
+    async function logon() {
+      keys = await SEA.pair();
+      user.auth(keys);
+      console.log('logged on: ', keys);
+      return user;
+    }
+
+
+
+    function addTodo() {
+      todoListGraph.set({
+        text: todo_input.value,
+        done: false,
+      });
+      todo_input.value = '';
+    }
+
+    // create a gun db for todos
+    document.addEventListener('DOMContentLoaded', async (e) => {
+      const todo_list = document.getElementById('todo_list');
+      const todo_input = document.getElementById('todo_input');
+      const add_todo = document.getElementById('add_todo');
+      const user = await logon();
+      console.log({ user })
+      // start(user);
+
+      add_todo.addEventListener('click', addTodo);
+      todo_input.addEventListener('keyup', (e) => {
+        if (e.keyCode === 13) {
+          addTodo();
+        }
+      });
+
     });
   </script>
 </body>
